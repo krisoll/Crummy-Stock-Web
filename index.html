@@ -3637,8 +3637,8 @@ function cats(){
     save();cats()};
 }
 
-/* Promo product ids are stored in the backup as a comma-separated string ("1,2,3"),
-   matching the phone's Promo.productIdsCsv field. Older backups may contain "[]". */
+/* Promo product ids travel as a JSON array of product ids, matching the phone's
+   Promo.productIds export. Older backups may contain a comma-separated string or "[]". */
 function promoProductIds(p){
   var raw=p&&p.productIds;
   if(Array.isArray(raw))return raw.map(Number).filter(function(n){return !isNaN(n)});
@@ -3762,7 +3762,7 @@ function editPromo(p){
     var o=n?{id:nextId(S.db.promos)}:p;
     o.name=name;o.kind=kind;
     o.categoryId=kind==='CATEGORY'?catId:null;
-    o.productIds=kind==='PRODUCTS'?chosen.join(','):'';
+    o.productIds=kind==='PRODUCTS'?chosen:[];
     o.thresholdQuantity=threshold;
     o.discountType=dtype;
     o.discountFixedCents=dtype==='FIXED'?fixedCents:0;
@@ -4260,9 +4260,9 @@ function backup(root){
   };
   $('#im').onchange=function(e){var f=e.target.files[0];if(f)importZip(f)};
 }
-/* Build the same archive the file export writes, for both the download and the phone. */
-function buildBackupZip(){
-  var db=JSON.parse(JSON.stringify(S.db)),z=new JSZip(),now=new Date();
+/* Build the JSON payload shared by the download and the phone transfer. */
+function backupData(){
+  var db=JSON.parse(JSON.stringify(S.db)),now=new Date();
   db.format=db.format||'stockapplication.backup';
   db.version=db.version||1;
   // Always write the active palette, even if the user never opened the Theme tab. A backup
@@ -4276,8 +4276,19 @@ function buildBackupZip(){
     tags:(db.tags||[]).length,
     productTags:(db.productTags||[]).length
   });
+  (db.products||[]).forEach(function(p){flags(p)});
+  // Match the phone's export: Promo.productIds is a JSON array of product ids, not a CSV
+  // string. The phone's importer accepts either, but writing the same shape both ways keeps a
+  // backup made here indistinguishable from one made on the phone.
+  (db.promos||[]).forEach(function(p){
+    if(p&&typeof p==='object')p.productIds=promoProductIds(p);
+  });
+  return db;
+}
+/* Build the same archive the file export writes, for both the download and the phone. */
+function buildBackupZip(){
+  var db=backupData(),z=new JSZip(),now=new Date();
   (db.products||[]).forEach(function(p){
-    flags(p);
     var u=p.imagePath&&S.imgs[p.imagePath];
     if(u)z.file('images/'+p.imagePath,u.split(',')[1],{base64:true});
   });
