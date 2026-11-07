@@ -35,6 +35,8 @@ step is required to run it.
 - **Phone transfer** — send a backup to the phone or download the phone's backup over
   the local Wi-Fi network.
 - **Backup and restore** — export/import the same `.zip` format used by the mobile app.
+- **Saving and loading feedback** — a header **Saving… / Saved** status for edits, plus a
+  full-screen loader for startup, backup import/export, Excel export, and clearing data.
 - **Local-data safety** — a permanent reminder that data lives in this browser, plus
   one-click backup export and last-backup tracking.
 - **Themes and colours** — the mobile app palettes plus custom colours and saved themes.
@@ -131,6 +133,7 @@ encrypted — use it on a trusted local network.
 | `resources/CrummyStock.lottie` | Logo animation source |
 | `backup/` | Historical backup snapshots |
 | `docs/screenshots/` | README screenshots |
+| `LICENSE` | GNU AGPL v3.0 license text |
 
 ## Tech stack
 
@@ -149,3 +152,13 @@ encrypted — use it on a trusted local network.
 - QR Code Generator for JavaScript — Kazuhiko Arase, MIT License
 
 Crummy Stock Desktop is designed as a companion to the Crummy Stock mobile app.
+
+## License
+
+Crummy Stock Desktop is licensed under the **GNU Affero General Public License v3.0
+(AGPL-3.0)**. See [LICENSE](LICENSE) for the full text.
+
+Copyright (C) 2026 Krisoll.
+
+Third-party components remain under their respective licenses; see the Credits section
+above.

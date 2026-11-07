@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  Crummy Stock Desktop
+  Copyright (C) 2026 Krisoll
+  SPDX-License-Identifier: AGPL-3.0-only
+  Licensed under the GNU Affero General Public License v3.0. See LICENSE.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -66,7 +72,7 @@ dialog::backdrop{background:#0008}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .qrb{background:#fff;padding:6px;border-radius:8px;width:150px;line-height:0}.qrb svg{width:100%;height:auto}
 .tg label{display:inline-flex;gap:4px;align-items:center;margin:0 10px 4px 0}
-#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:400}
 #toast.show{opacity:1}
 video{width:100%;border-radius:10px;background:#000}
 .prog{height:10px;border-radius:6px;background:var(--line);overflow:hidden;display:none;margin:8px 0}
@@ -78,6 +84,17 @@ video{width:100%;border-radius:10px;background:#000}
 .storageWarn .g{flex:1;min-width:240px;font-size:.9rem}
 .storageWarn .warnIcon{color:var(--warn);font-weight:700}
 .storageWarn .mut{display:block;margin-top:2px}
+.saveStatus{display:none;align-items:center;gap:6px;font-size:.78rem;padding:4px 9px;border-radius:20px;background:var(--card);border:1px solid var(--line);white-space:nowrap}
+.saveStatus.on{display:inline-flex}
+.saveStatus::before{content:'';width:10px;height:10px;border:2px solid var(--line);border-top-color:var(--btn);border-radius:50%;animation:spin .7s linear infinite}
+.saveStatus.done::before{content:'✓';width:auto;height:auto;border:0;animation:none;color:var(--btn);font-weight:700}
+.saveStatus.err{color:var(--bad)}
+.saveStatus.err::before{content:'!';width:auto;height:auto;border:0;animation:none;color:var(--bad);font-weight:700}
+.busy{position:fixed;inset:0;background:#0007;z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+.busy[hidden]{display:none}
+.busyBox{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px #0004;font-weight:600}
+.spinner{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--btn);border-radius:50%;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
 .mono{font-family:ui-monospace,Consolas,monospace}
 .themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:12px}
 .themecard{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px;cursor:pointer}
@@ -93,6 +110,7 @@ video{width:100%;border-radius:10px;background:#000}
 <header>
   <h1><span id="logo" aria-hidden="true">🛒</span><span>Crummy Stock</span></h1>
   <nav id="nav"></nav>
+  <span id="saveStatus" class="saveStatus" role="status" aria-live="polite"></span>
 </header>
 <div class="storageWarn" role="note">
   <div class="box">
@@ -105,6 +123,7 @@ video{width:100%;border-radius:10px;background:#000}
 <dialog id="dlg"></dialog>
 <dialog id="cropDlg"></dialog>
 <div id="toast"></div>
+<div id="busy" class="busy" hidden role="status" aria-live="polite"><div class="busyBox"><span class="spinner"></span><span id="busyText"></span></div></div>
 <script>//---------------------------------------------------------------------
 //
 // QR Code Generator for JavaScript
@@ -2444,6 +2463,12 @@ var I18N={es:{
 'Last backup: {n} days ago.':'Última copia: hace {n} días.',
 'Last backup: {date}.':'Última copia: {date}.',
 'Could not save in this browser':'No se pudo guardar en este navegador',
+'Saving…':'Guardando…',
+'Not saved':'No guardado',
+'Loading inventory…':'Cargando inventario…',
+'Importing backup…':'Importando copia…',
+'Building Excel file…':'Creando archivo Excel…',
+'Clearing data…':'Borrando datos…',
 'Saved {name}':'Guardado {name}',
 'Still loading':'Todavía cargando',
 'Could not read image':'No se pudo leer la imagen',
@@ -2501,6 +2526,24 @@ var I18N={es:{
 'Tax and card fee are both deducted from the sale total. The card fee only applies to card payments, and is the percentage plus the fixed fee per transaction.':'El impuesto y la comisión se descuentan del total de la venta. La comisión solo se aplica al pagar con tarjeta, y es el porcentaje más la comisión fija por operación.',
 'These settings are saved in the backup and used by the phone for new sales. Existing sales keep their original tax and card fees.':'Estos ajustes se guardan en la copia de seguridad y el teléfono los usa para las ventas nuevas. Las ventas existentes conservan su impuesto y comisión originales.',
 'Card fees':'Comisiones de tarjeta',
+'Dev tools':'Herramientas de desarrollo',
+'Dev build only.':'Solo compilación de desarrollo.',
+'Generate extra data for testing. Fake records are marked and can be removed without touching the sample data.':'Genera datos extra para probar. Los registros falsos están marcados y se pueden quitar sin tocar los datos de ejemplo.',
+'Fake categories':'Categorías falsas',
+'Fake products':'Productos falsos',
+'Fake sales':'Ventas falsas',
+'Add fake data':'Agregar datos falsos',
+'Remove fake data':'Quitar datos falsos',
+'Current fake data: {c} categories · {p} products · {s} orders':'Datos falsos actuales: {c} categorías · {p} productos · {s} pedidos',
+'Fake products use barcodes starting with FAKE-. Fake orders use IDs starting with FAKE-.':'Los productos falsos usan códigos que empiezan con FAKE-. Los pedidos falsos usan IDs que empiezan con FAKE-.',
+'Select at least one type':'Selecciona al menos un tipo',
+'Add fake products first':'Agrega productos falsos primero',
+'Adding fake data…':'Agregando datos falsos…',
+'Removing fake data…':'Quitando datos falsos…',
+'Fake data added':'Datos falsos agregados',
+'Fake data removed':'Datos falsos eliminados',
+'Remove all fake data?':'¿Quitar todos los datos falsos?',
+'Added {c} categories, {p} products and {s} orders':'Se agregaron {c} categorías, {p} productos y {s} pedidos',
 /* inventory */
 'Products':'Productos',
 'Units':'Unidades',
@@ -2986,7 +3029,40 @@ function setLang(setting){
 /* ---------- storage (IndexedDB, falls back to memory) ---------- */
 function idb(){return new Promise(function(res,rej){try{var r=indexedDB.open(DBNAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv')};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
 function kv(mode,fn){return idb().then(function(d){return new Promise(function(res,rej){var t=d.transaction('kv',mode),q=fn(t.objectStore('kv'));t.oncomplete=function(){res(q&&q.result)};t.onerror=function(){rej(t.error)}})})}
-function save(){kv('readwrite',function(s){return s.put({db:S.db,imgs:S.imgs},'state')}).catch(function(){toast(t('Could not save in this browser'))})}
+var SAVE_PENDING=0,SAVE_STATUS_TIMER=0,BUSY_COUNT=0;
+function setSaveStatus(cls,text){
+  var el=$('#saveStatus');if(!el)return;
+  clearTimeout(SAVE_STATUS_TIMER);
+  el.className='saveStatus on'+(cls?' '+cls:'');
+  el.textContent=text;
+}
+function save(){
+  SAVE_PENDING++;
+  setSaveStatus('',t('Saving…'));
+  return kv('readwrite',function(s){return s.put({db:S.db,imgs:S.imgs},'state')}).then(function(){return true},function(){toast(t('Could not save in this browser'));return false}).then(function(ok){
+    SAVE_PENDING--;
+    if(SAVE_PENDING===0){
+      if(ok){
+        setSaveStatus('done',t('Saved'));
+        SAVE_STATUS_TIMER=setTimeout(function(){var el=$('#saveStatus');if(el)el.className='saveStatus'},1400);
+      }else{
+        setSaveStatus('err',t('Not saved'));
+        SAVE_STATUS_TIMER=setTimeout(function(){var el=$('#saveStatus');if(el)el.className='saveStatus'},3000);
+      }
+    }
+    return ok;
+  });
+}
+function showBusy(msg){
+  BUSY_COUNT++;
+  var b=$('#busy'),el=$('#busyText');
+  if(b)b.hidden=false;
+  if(el&&msg)el.textContent=msg;
+}
+function hideBusy(){
+  BUSY_COUNT=Math.max(0,BUSY_COUNT-1);
+  if(BUSY_COUNT===0){var b=$('#busy');if(b)b.hidden=true}
+}
 function load(){return kv('readonly',function(s){return s.get('state')}).catch(function(){return null})}
 /* A build can carry a one-time reset token (used for a clean release). The next load
    clears the saved inventory once, records the token in the database, then later loads
@@ -3495,12 +3571,13 @@ function exportSalesExcel(){
     legacy.forEach(function(l){oldRows.push([xlDate(l&&l.soldAt),xlText(saleName(l)),xlText(saleCode(l)),xlNum(saleQty(l)),xlMoney(saleUnit(l)),xlMoney(saleLineTotal(l)),xlText(l&&l.note||'')])});
     sheets.push({name:t('Older sales'),rows:oldRows,widths:[20,32,18,10,14,14,36]});
   }
-  buildSalesWorkbook(sheets).then(function(blob){
+  showBusy(t('Building Excel file…'));
+  Promise.resolve().then(function(){return buildSalesWorkbook(sheets)}).then(function(blob){
     var d=new Date(),p=function(n){return(n<10?'0':'')+n};
     var filtered=!!(S.salesQ||S.salesPay||S.salesFrom||S.salesTo);
     var name=(LANG==='es'?'ventas-':'sales-')+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+(filtered?(LANG==='es'?'-filtrado':'-filtered'):'')+'.xlsx';
     return saveFile(name,blob);
-  }).catch(function(e){toast(t('Excel export failed: {msg}',{msg:e.message}))});
+  }).catch(function(e){toast(t('Excel export failed: {msg}',{msg:e.message}))}).then(function(){hideBusy()});
 }
 
 function edit(p){
@@ -3923,7 +4000,10 @@ function getFromPhone(){
 
 function config(){
   var sections=[['theme',t('Theme')],['lang',t('Language')],['currency',t('Currency')],['fees',t('Taxes & fees')],['data',t('Backup')]];
-  if(S.cfg!=='theme'&&S.cfg!=='data'&&S.cfg!=='lang'&&S.cfg!=='currency'&&S.cfg!=='fees')S.cfg='theme';
+  if(PROFILE==='dev')sections.push(['dev',t('Dev tools')]);
+  var valid=['theme','data','lang','currency','fees'];
+  if(PROFILE==='dev')valid.push('dev');
+  if(valid.indexOf(S.cfg)<0)S.cfg='theme';
   $('#main').innerHTML='<h2>⚙ '+t('Config')+'</h2>'+
     '<div class="bar">'+sections.map(function(x){
       return '<button class="'+(S.cfg===x[0]?'on':'alt')+'" data-c="'+x[0]+'">'+x[1]+'</button>';
@@ -3932,7 +4012,7 @@ function config(){
     b.onclick=function(){S.cfg=b.dataset.c;config()};
   });
   var body=$('#cfg_body');
-  if(S.cfg==='theme')themeView(body);else if(S.cfg==='data')backup(body);else if(S.cfg==='lang')langView(body);else if(S.cfg==='currency')currencyView(body);else feesView(body);
+  if(S.cfg==='theme')themeView(body);else if(S.cfg==='data')backup(body);else if(S.cfg==='lang')langView(body);else if(S.cfg==='currency')currencyView(body);else if(S.cfg==='fees')feesView(body);else devView(body);
 }
 
 function langView(root){
@@ -3983,6 +4063,118 @@ function feesView(root){
     st.cardFeeFixedCents=Math.round(fixed*100);
     save();feesView(root);toast(t('Fees saved'));
   };
+}
+
+function isFakeCategory(c){return Number(c.id)>=9000&&/^Fake category /.test(String(c.name||''))}
+function isFakeProduct(p){return Number(p.id)>=9000&&/^FAKE-/.test(String(p.barcode||''))}
+function isFakeOrder(o){return /^FAKE-/.test(String(o.orderId||''))}
+function isFakeLine(l){return /^FAKE-/.test(String(l.orderId||''))}
+function devNextId(arr){
+  var id=9000;
+  while(arr.some(function(x){return Number(x.id)===id}))id++;
+  return id;
+}
+function fakeOrderId(){
+  var base='FAKE-'+Date.now().toString(36),id=base,n=2;
+  while(S.db.orders.some(function(o){return o.orderId===id}))id=base+'-'+(n++);
+  return id;
+}
+function devUpdateCounts(){
+  var c=S.db.counts=S.db.counts||{};
+  c.categories=S.db.categories.length;
+  c.products=S.db.products.length;
+  c.orders=S.db.orders.length;
+  c.saleLines=S.db.sales.length;
+}
+function addFakeData(cats,prods,sales){
+  if(!cats&&!prods&&!sales){toast(t('Select at least one type'));return}
+  showBusy(t('Adding fake data…'));
+  var i,id;
+  if(cats){
+    for(i=0;i<6;i++){
+      id=devNextId(S.db.categories);
+      S.db.categories.push({id:id,name:'Fake category '+id});
+    }
+  }
+  if(prods){
+    for(i=0;i<20;i++){
+      id=devNextId(S.db.products);
+      var catList=S.db.categories;
+      var p={id:id,barcode:'FAKE-'+id,name:'Fake product '+id,priceCents:100+Math.floor(Math.random()*9900),quantity:Math.floor(Math.random()*25),categoryId:catList.length?catList[Math.floor(Math.random()*catList.length)].id:null,imagePath:null};
+      flags(p);
+      S.db.products.push(p);
+    }
+  }
+  if(sales){
+    if(!S.db.products.length){
+      toast(t('Add fake products first'));
+    }else{
+      var st=S.db.settings||{},taxRate=Number(st.taxRateBasisPoints)||0,cardRate=Number(st.cardFeeRateBasisPoints)||0,cardFixed=Number(st.cardFeeFixedCents)||0;
+      var lineId=nextId(S.db.sales);
+      for(i=0;i<20;i++){
+        var orderId=fakeOrderId();
+        var d=new Date();
+        d.setDate(d.getDate()-Math.floor(Math.random()*30));
+        d.setHours(9+Math.floor(Math.random()*10),Math.floor(Math.random()*60),0,0);
+        var soldAt=d.getTime();
+        var payment=['CASH','CARD','OTHER'][Math.floor(Math.random()*3)];
+        var lineCount=1+Math.floor(Math.random()*3);
+        var chosen=[];
+        while(chosen.length<lineCount){
+          var candidate=S.db.products[Math.floor(Math.random()*S.db.products.length)];
+          if(!chosen.some(function(x){return x.id===candidate.id}))chosen.push(candidate);
+        }
+        var subtotal=0,itemCount=0,lines=[];
+        chosen.forEach(function(p2){
+          var qty=1+Math.floor(Math.random()*3);
+          subtotal+=p2.priceCents*qty;
+          itemCount+=qty;
+          lines.push({id:lineId++,productId:p2.id,productName:p2.name,barcode:p2.barcode,quantity:qty,unitPriceCents:p2.priceCents,soldAt:soldAt,soldAtIso:d.toISOString().replace(/\.\d+Z$/,'Z'),orderId:orderId});
+        });
+        var tax=Math.round(subtotal*taxRate/10000);
+        var fee=payment==='CARD'?Math.round(subtotal*cardRate/10000)+cardFixed:0;
+        S.db.orders.push({orderId:orderId,soldAt:soldAt,soldAtIso:d.toISOString().replace(/\.\d+Z$/,'Z'),paymentMethod:payment,itemsSubtotalCents:subtotal,promoDiscountCents:0,promoName:'',taxRateBasisPoints:taxRate,taxCents:tax,cardFeeRateBasisPoints:cardRate,cardFeeFixedCents:cardFixed,cardFeeCents:fee,totalCents:subtotal+tax+fee,itemCount:itemCount,note:'Fake sale'});
+        S.db.sales=S.db.sales.concat(lines);
+      }
+    }
+  }
+  devUpdateCounts();
+  save().then(function(){var root=$('#cfg_body');if(root)devView(root);toast(t('Fake data added'));hideBusy()},hideBusy);
+}
+function removeFakeData(){
+  if(!confirm(t('Remove all fake data?')))return;
+  showBusy(t('Removing fake data…'));
+  var fakeProductIds={};
+  S.db.products.forEach(function(p){if(isFakeProduct(p))fakeProductIds[p.id]=true});
+  S.db.categories=S.db.categories.filter(function(c){return !isFakeCategory(c)});
+  S.db.products=S.db.products.filter(function(p){return !isFakeProduct(p)});
+  S.db.productTags=S.db.productTags.filter(function(t){return !fakeProductIds[t.productId]});
+  S.db.orders=S.db.orders.filter(function(o){return !isFakeOrder(o)});
+  S.db.sales=S.db.sales.filter(function(l){return !isFakeLine(l)});
+  devUpdateCounts();
+  save().then(function(){var root=$('#cfg_body');if(root)devView(root);toast(t('Fake data removed'));hideBusy()},hideBusy);
+}
+function devView(root){
+  root=root||$('#main');
+  var fc=S.db.categories.filter(isFakeCategory).length;
+  var fp=S.db.products.filter(isFakeProduct).length;
+  var fo=S.db.orders.filter(isFakeOrder).length;
+  root.innerHTML='<h2>'+t('Dev tools')+'</h2>'+
+    '<div class="note"><b>'+t('Dev build only.')+'</b> '+t('Generate extra data for testing. Fake records are marked and can be removed without touching the sample data.')+'</div>'+
+    '<div class="fld tg">'+
+      '<label><input type="checkbox" id="dev_cat" checked> '+t('Fake categories')+'</label>'+
+      '<label><input type="checkbox" id="dev_prod" checked> '+t('Fake products')+'</label>'+
+      '<label><input type="checkbox" id="dev_sale" checked> '+t('Fake sales')+'</label>'+
+    '</div>'+
+    '<div class="bar"><button id="dev_add">'+t('Add fake data')+'</button><button class="danger" id="dev_remove">'+t('Remove fake data')+'</button></div>'+
+    '<p class="mut">'+esc(t('Current fake data: {c} categories · {p} products · {s} orders',{c:fc,p:fp,s:fo}))+'</p>'+
+    '<p class="mut">'+t('Fake products use barcodes starting with FAKE-. Fake orders use IDs starting with FAKE-.')+'</p>';
+  $('#dev_add').onclick=function(){
+    var cats=$('#dev_cat').checked,prods=$('#dev_prod').checked,sales=$('#dev_sale').checked;
+    if(!cats&&!prods&&!sales){toast(t('Select at least one type'));return}
+    addFakeData(cats,prods,sales);
+  };
+  $('#dev_remove').onclick=function(){removeFakeData()};
 }
 
 function themeView(root){
@@ -4058,11 +4250,13 @@ function backup(root){
   $('#ex').onclick=exportZip;
   $('#rs').onclick=function(){
     if(!confirm(t('Delete all data in this browser? This cannot be undone.')))return;
+    showBusy(t('Clearing data…'));
     setState(JSON.parse(JSON.stringify(SEED)));
     // Delete the stored record rather than writing an empty one over it: a fresh load then
     // takes the same empty-state path as a browser that has never opened this page.
-    kv('readwrite',function(s){return s.delete('state')}).catch(function(){save()});
-    S.tab='inv';render();toast(t('All data cleared'));
+    kv('readwrite',function(s){return s.delete('state')}).catch(function(){return save()}).then(function(){
+      S.tab='inv';render();toast(t('All data cleared'));
+    }).then(hideBusy,hideBusy);
   };
   $('#im').onchange=function(e){var f=e.target.files[0];if(f)importZip(f)};
 }
@@ -4094,7 +4288,8 @@ function buildBackupZip(){
 }
 function exportZip(){
   if(!S.db){toast(t('Still loading'));return}
-  buildBackupZip().then(function(o){return saveFile(o.name,o.blob)}).then(function(){recordBackup()}).catch(function(e){toast(t('Export failed: {msg}',{msg:e.message}))});
+  showBusy(t('Building backup…'));
+  Promise.resolve().then(buildBackupZip).then(function(o){return saveFile(o.name,o.blob)}).then(function(){recordBackup()}).catch(function(e){toast(t('Export failed: {msg}',{msg:e.message}))}).then(function(){hideBusy()});
 }
 /* Read a .zip from the file picker or from the phone. The phone path uses the same validation. */
 function importBackupBlob(blob,sourceName){
@@ -4112,17 +4307,17 @@ function importBackupBlob(blob,sourceName){
       });
       return Promise.all(jobs).then(function(){
         setState({backup:db,images:imgs});
-        save();
-        return db;
+        return save().then(function(){return db});
       });
     });
   });
 }
 function importZip(f){
+  showBusy(t('Importing backup…'));
   importBackupBlob(f,f.name).then(function(db){
     S.tab='inv';render();
     toast(t('Imported {n} products, {m} photos',{n:db.products.length,m:Object.keys(S.imgs).length}));
-  }).catch(function(e){toast(t('Import failed: {msg}',{msg:e.message}))});
+  }).catch(function(e){toast(t('Import failed: {msg}',{msg:e.message}))}).then(function(){hideBusy()});
 }
 
 function scan(){
@@ -4168,10 +4363,11 @@ initCurrency();
 initLanguage();
 initStorageWarning();
 requestPersistentStorage();
+showBusy(t('Loading inventory…'));
 resetStoredState().then(function(){return load()}).then(function(st){
   if(st&&st.db){S.db=st.db;S.imgs=st.imgs||{};applyThemeFromSettings()}
   else setState(JSON.parse(JSON.stringify(SEED)));
-  (S.db.products||[]).forEach(flags);render();
+  (S.db.products||[]).forEach(flags);render();hideBusy();
 });
 </script>
 </body>
