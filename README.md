@@ -1,3 +1,11 @@
+**Support me on Ko-fi:** [![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/krisoll)
+
+**Follow me on Socials:** [Instagram](https://www.instagram.com/krisoll/) · [Twitter](https://x.com/krisoll)
+
+**Try it live:** [krisoll.github.io/Crummy-Stock-Web](https://krisoll.github.io/Crummy-Stock-Web/)
+
+**Join the community:** [Discord](https://discord.gg/schG4aJ24T)
+
 # Crummy Stock — Desktop
 
 A standalone, offline browser app for managing a small shop's inventory, promos, and
@@ -51,40 +59,9 @@ step is required to run it.
 3. Start adding products, or import a backup from the phone via **⚙ Config → Backup**.
 4. Export a backup regularly.
 
-To try the sample data, open **`dev/Stock App.dev.html`** instead. It contains sample
-products, photos, categories, and generated sales history with historical promo
-discounts.
-
 > **Data is local to this browser and computer.** Use a normal browser window, allow
 > site data, and keep backups. If `file://` storage is blocked by the browser, serve the
 > folder with any static file server and open it over `http://`.
-
-## Release and dev profiles
-
-| Profile | App file | Default data | IndexedDB |
-|---|---|---|---|
-| Release | `release/Stock App.html` | Empty | `stock-app` |
-| Dev | `dev/Stock App.dev.html` | Sample inventory, photos, and sales history | `stock-app-dev` |
-
-The dev build shows a **DEV** badge in the header. Release and dev use separate
-databases, so testing cannot overwrite the shop's release data.
-
-### Build the profiles
-
-Run from the repository root on Windows:
-
-```powershell
-.\build-profiles.ps1 -Profile release
-.\build-profiles.ps1 -Profile dev
-.\build-profiles.ps1 -Profile release -ClearData
-.\build-profiles.ps1 -Profile both
-```
-
-- `-ClearData` gives a release build a one-time reset token. The next load clears the
-  saved release inventory once, then keeps future saves normally.
-- `release/Stock App.html` is the source of truth. `dev/Stock App.dev.html` is generated;
-  do not edit it directly.
-- Seed data lives in `profiles/release.seed.json` and `profiles/dev.seed.json`.
 
 ## Configuration
 
@@ -102,6 +79,27 @@ The gear menu contains:
 Language and currency overrides are stored in browser `localStorage`; they do not change
 the phone backup. Tax and fee values are written into the backup settings and travel to
 the phone.
+
+## Customizing colours
+
+Open **⚙ Config → Theme** to change the app's palette.
+
+- Choose one of the five built-in palettes from the phone app.
+- Or set custom **Background**, **Panel**, **Button**, **Text**, and **Highlight**
+  colours.
+- Save a named theme to reuse it later. Saved themes travel in the backup and are added
+  to the phone's saved themes.
+- Importing a phone backup adopts that phone's current colours; sending a backup to the
+  phone applies this app's palette there.
+- Changes apply immediately across the header, cards, buttons, dialogs, and warning bar.
+
+Built-in palettes:
+
+| Default | Sage | Sunset |
+|---|---|---|
+| ![Default theme](docs/screenshots/theme-default.png) | ![Sage theme](docs/screenshots/theme-sage.png) | ![Sunset theme](docs/screenshots/theme-sunset.png) |
+| **Ocean** | **Midnight** | |
+| ![Ocean theme](docs/screenshots/theme-ocean.png) | ![Midnight theme](docs/screenshots/theme-midnight.png) | |
 
 ## Phone transfer
 
@@ -130,13 +128,9 @@ encrypted — use it on a trusted local network.
 | Path | Purpose |
 |---|---|
 | `release/Stock App.html` | Release app and source of truth |
-| `dev/Stock App.dev.html` | Generated dev build |
-| `profiles/` | Release and dev seed JSON |
 | `resources/CrummyStock.lottie` | Logo animation source |
 | `backup/` | Historical backup snapshots |
-| `docs/` | Screenshots, development notes, changelog |
-| `build-profiles.ps1` | Profile builder |
-| `testData.zip` | Source data for the current dev sample |
+| `docs/screenshots/` | README screenshots |
 
 ## Tech stack
 
@@ -146,11 +140,6 @@ encrypted — use it on a trusted local network.
 - [lottie-web](https://github.com/airbnb/lottie-web) for the animated logo
 - QR code generator by Kazuhiko Arase
 - No bundler, package manager, or runtime dependency to launch the app
-
-## Development
-
-See [Development notes & changelog](docs/DEVELOPMENT.md) for the detailed implementation
-history, data schemas, testing record, and per-change notes.
 
 ## Credits
 
